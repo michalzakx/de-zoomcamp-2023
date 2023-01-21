@@ -1,0 +1,36 @@
+# Basic PostgreSQL configuration with pgAdmin.
+---
+version: "3.9"
+services:
+
+  db_postgres:
+    image: postgres:latest
+    volumes:
+      - volume_db_postgres:/var/lib/postgresql/data
+    ports:
+      - "54320:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: nyc_tlc_trips
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "root" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+
+  pgadmin:
+    image: dpage/pgadmin4
+    volumes:
+      - volume_pgadmin:/var/lib/pgadmin
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    restart: always
+
+volumes:
+  volume_db_postgres:
+  volume_pgadmin:
