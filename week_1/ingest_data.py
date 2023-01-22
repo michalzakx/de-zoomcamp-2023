@@ -18,7 +18,7 @@ to ingest data in the append mode.
 
 
 Example:
-    python ingest_data.py yellow 2019 1
+    python ingest_data.py green 2019 1 --db_name nyc_tlc_trips --db_port 54320
 """
 
 import argparse
