@@ -46,3 +46,6 @@ terraform.rc
 
 # Credential files
 key*
+
+# Airflow user settings
+week_2/.env
