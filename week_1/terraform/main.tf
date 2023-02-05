@@ -15,9 +15,32 @@ provider "google" {
   credentials = var.credentials
 }
 
-# Data Lake Bucket
-resource "google_storage_bucket" "data-lake" {
-  name     = "${local.data_lake_bucket}_${var.project}"
+# Data Buckets
+resource "google_storage_bucket" "raw-data" {
+  name     = "${local.raw_data_bucket}_${var.project}"
+  location = var.region
+
+  storage_class               = var.storage_class
+  uniform_bucket_level_access = true
+
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      age = 30
+    }
+  }
+
+  force_destroy = true
+}
+
+resource "google_storage_bucket" "transformed-data" {
+  name     = "${local.transformed_data_bucket}_${var.project}"
   location = var.region
 
   storage_class               = var.storage_class
