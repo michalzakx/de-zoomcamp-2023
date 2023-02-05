@@ -41,7 +41,7 @@ terraform.rc
 
 # --- Airflow ---
 # Logs
-./week_2/logs/*
+week_2/logs/*
 
 
 # --- Other ---
