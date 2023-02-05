@@ -39,6 +39,10 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# --- Airflow ---
+# Logs
+./week_2/logs/*
+
 
 # --- Other ---
 # Log files
