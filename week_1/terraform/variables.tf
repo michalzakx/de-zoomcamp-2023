@@ -1,6 +1,5 @@
 locals {
-  raw_data_bucket         = "raw-data"
-  transformed_data_bucket = "transformed-data"
+  data_lake_bucket = "data-lake"
 }
 
 # Project information

@@ -17,8 +17,7 @@ provider "google" {
 
 # Data Buckets
 resource "google_storage_bucket" "taxi-bucket" {
-  for_each = toset(["${local.raw_data_bucket}-${var.project}", "${local.transformed_data_bucket}-${var.project}"])
-  name     = each.key
+  name     = "${local.data_lake_bucket}-${var.project}"
   location = var.region
 
   storage_class               = var.storage_class
