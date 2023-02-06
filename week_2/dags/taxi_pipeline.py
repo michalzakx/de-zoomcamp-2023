@@ -10,6 +10,10 @@ from airflow.providers.http.sensors.http import HttpSensor  # type: ignore
 from airflow.providers.google.cloud.transfers.local_to_gcs import (  # type: ignore
     LocalFilesystemToGCSOperator,
 )
+from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (  # type: ignore
+    GCSToBigQueryOperator,
+)
+
 
 default_args = {
     "owner": "michal",
@@ -129,13 +133,25 @@ def taxi_pipeline():
         task_id="local_storage_cleanup", bash_command="rm /tmp/data/*"
     )
 
+    write_bq = GCSToBigQueryOperator(
+        task_id="write_bq",
+        bucket="{{ var.value.gcs_data_lake }}",
+        source_objects="cleaned/{{ params.v_type }}_{{ params.year }}_{{ params.month }}.parquet",
+        destination_project_dataset_table="{{ var.value.bq_taxi_data }}.{{ params.v_type }}_tripdata",
+        source_format="parquet",
+        compression="GZIP",
+        create_disposition="CREATE_IF_NEEDED",
+        write_disposition="WRITE_APPEND",
+        gcp_conn_id="gcp_conn",
+    )
+
     validate_date = _validate_date()
     fetch_data = _fetch_data()
     clean_data = _clean_data(fetch_data)
 
     validate_date >> is_tripdata_available >> fetch_data  # type: ignore
-    fetch_data >> clean_data >> write_gcs  # type: ignore
-    write_gcs >> local_storage_cleanup  # type: ignore
+    fetch_data >> clean_data >> write_gcs >> local_storage_cleanup  # type: ignore
+    local_storage_cleanup >> write_bq  # type: ignore
 
 
 pipeline = taxi_pipeline()
