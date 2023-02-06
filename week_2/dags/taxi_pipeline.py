@@ -7,6 +7,8 @@ from airflow.decorators import dag, task  # type: ignore
 from airflow.models import Param, Variable
 from airflow.operators.bash import BashOperator
 from airflow.providers.http.sensors.http import HttpSensor  # type: ignore
+
+# from airflow.operators.email import EmailOperator
 from airflow.providers.google.cloud.transfers.local_to_gcs import (  # type: ignore
     LocalFilesystemToGCSOperator,
 )
@@ -134,7 +136,7 @@ def taxi_pipeline():
     )
 
     write_bq = GCSToBigQueryOperator(
-        task_id="write_bq",
+        task_id="write_bqqqq",
         bucket="{{ var.value.gcs_data_lake }}",
         source_objects="cleaned/{{ params.v_type }}_{{ params.year }}_{{ params.month }}.parquet",
         destination_project_dataset_table="{{ var.value.bq_taxi_data }}.{{ params.v_type }}_tripdata",
@@ -144,6 +146,13 @@ def taxi_pipeline():
         write_disposition="WRITE_APPEND",
         gcp_conn_id="gcp_conn",
     )
+
+    # send_email_notification = EmailOperator(
+    #     task_id="send_email_notification",
+    #     to="{{ var.value.email }}",
+    #     subject="Ingestion completed",
+    #     html_content="Date: {{ ds }}",
+    # )
 
     validate_date = _validate_date()
     fetch_data = _fetch_data()
