@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict
 
 import pandas as pd
@@ -20,10 +20,10 @@ from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (  # type: 
 default_args = {
     "owner": "michal",
     "email": "michal@mail.com",
-    # "email_on_failure": False,
-    # "email_on_retry": False,
-    # "retries": 1,
-    # "retry_delay": timedelta(minutes=5),
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 1,
+    "retry_delay": timedelta(minutes=1),
 }
 
 dag_params = {
@@ -136,7 +136,7 @@ def taxi_pipeline():
     )
 
     write_bq = GCSToBigQueryOperator(
-        task_id="write_bqqqq",
+        task_id="write_bq",
         bucket="{{ var.value.gcs_data_lake }}",
         source_objects="cleaned/{{ params.v_type }}_{{ params.year }}_{{ params.month }}.parquet",
         destination_project_dataset_table="{{ var.value.bq_taxi_data }}.{{ params.v_type }}_tripdata",
