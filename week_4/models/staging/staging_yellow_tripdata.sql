@@ -1,44 +1,46 @@
 {{ config(materialized='view') }}
  
-WITH Tripdata AS (
-    SELECT     *
-               , ROW_NUMBER() OVER (PARTITION BY vendorid, tpep_pickup_datetime) AS rn
-    FROM       {{ source('staging','yellow_tripdata') }}
-    WHERE      vendorid IS NOT NULL
+with tripdata as 
+(
+  select *,
+    row_number() over(partition by vendorid, tpep_pickup_datetime) as rn
+  from {{ source('staging','yellow_tripdata') }}
+  where vendorid is not null 
 )
-SELECT     -- identifiers
-           {{ dbt_utils.surrogate_key(['vendorid', 'tpep_pickup_datetime']) }} AS tripid
-           , CAST(vendorid AS INTEGER) AS vendorid
-           , CAST(ratecodeid AS INTEGER) AS ratecodeid
-           , CAST(pulocationid AS INTEGER) AS pickup_locationid
-           , CAST(dolocationid AS INTEGER) AS dropoff_locationid
+select
+   -- identifiers
+    {{ dbt_utils.surrogate_key(['vendorid', 'tpep_pickup_datetime']) }} as tripid,
+    cast(vendorid as numeric) as vendorid,
+    cast(ratecodeid as numeric) as ratecodeid,
+    cast(pulocationid as numeric) as  pickup_locationid,
+    cast(dolocationid as numeric) as dropoff_locationid,
     
-           -- timestamps
-           , CAST(tpep_pickup_datetime AS TIMESTAMP) AS pickup_datetime
-           , CAST(tpep_dropoff_datetime AS TIMESTAMP) AS dropoff_datetime
+    -- timestamps
+    cast(tpep_pickup_datetime as timestamp) as pickup_datetime,
+    cast(tpep_dropoff_datetime as timestamp) as dropoff_datetime,
     
-           -- trip info
-           , store_and_fwd_flag
-           , CAST(passenger_count AS INTEGER) AS passenger_count
-           , CAST(trip_distance AS NUMERIC) AS trip_distance
+    -- trip info
+    store_and_fwd_flag,
+    cast(passenger_count as numeric) as passenger_count,
+    cast(trip_distance as numeric) as trip_distance,
+    -- yellow cabs are always street-hail
+    1 as trip_type,
+    
+    -- payment info
+    cast(fare_amount as numeric) as fare_amount,
+    cast(extra as numeric) as extra,
+    cast(mta_tax as numeric) as mta_tax,
+    cast(tip_amount as numeric) as tip_amount,
+    cast(tolls_amount as numeric) as tolls_amount,
+    cast(0 as numeric) as ehail_fee,
+    cast(improvement_surcharge as numeric) as improvement_surcharge,
+    cast(total_amount as numeric) as total_amount,
+    cast(payment_type as numeric) as payment_type,
+    cast(congestion_surcharge as numeric) as congestion_surcharge
+from tripdata
+where rn = 1
 
-           -- yellow cabs are always street-hail
-           , 1 AS trip_type
-    
-           -- payment info
-           , CAST(fare_amount AS NUMERIC) AS fare_amount
-           , CAST(extra AS NUMERIC) AS extra
-           , CAST(mta_tax AS NUMERIC) AS mta_tax
-           , CAST(tip_amount AS NUMERIC) AS tip_amount
-           , CAST(tolls_amount AS NUMERIC) AS tolls_amount
-           , CAST(0 AS NUMERIC) AS ehail_fee
-           , CAST(improvement_surcharge AS NUMERIC) AS improvement_surcharge
-           , CAST(total_amount AS NUMERIC) AS total_amount
-           , CAST(payment_type AS INTEGER) AS payment_type
-           , CAST(congestion_surcharge AS NUMERIC) AS congestion_surcharge
-FROM       Tripdata
-WHERE      rn = 1
-
+-- dbt build --m <model.sql> --var 'is_test_run: false'
 {% if var('is_test_run', default=true) %}
 
   limit 100
